@@ -12,18 +12,21 @@ export interface UpdateProfileInput {
 
 export async function updateProfile(data: UpdateProfileInput) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: authData } = await supabase.auth.getClaims();
+  const user = authData?.claims;
 
   if (!user) {
     throw new Error('Unauthorized');
   }
+
+  const userId = user.sub;
 
   // Check if username is taken
   const { data: existingUser } = await supabase
     .from('profiles')
     .select('id')
     .eq('username', data.username)
-    .neq('id', user.id)
+    .neq('id', userId)
     .single();
 
   if (existingUser) {
@@ -39,7 +42,7 @@ export async function updateProfile(data: UpdateProfileInput) {
       bio: data.bio,
       updated_at: new Date().toISOString()
     })
-    .eq('id', user.id);
+    .eq('id', userId);
 
   if (error) {
     throw error;
@@ -63,11 +66,14 @@ export async function checkUsername(username: string) {
 
 export async function uploadAvatar(formData: FormData) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims;
 
   if (!user) {
     throw new Error('Unauthorized');
   }
+
+  const userId = user.sub;
 
   const file = formData.get('file') as File;
   if (!file) {
@@ -84,7 +90,7 @@ export async function uploadAvatar(formData: FormData) {
     throw new Error('File size must be less than 5MB');
   }
 
-  const fileName = `${user.id}/${Date.now()}_${file.name}`;
+  const fileName = `${userId}/${Date.now()}_${file.name}`;
 
   // Upload to storage
   const { error: uploadError } = await supabase.storage
@@ -107,7 +113,7 @@ export async function uploadAvatar(formData: FormData) {
   const { error: updateError } = await supabase
     .from('profiles')
     .update({ avatar_url: publicUrl })
-    .eq('id', user.id);
+    .eq('id', userId);
 
   if (updateError) {
     throw updateError;
