@@ -64,10 +64,10 @@ export async function updateSession(request: NextRequest) {
       .from('profiles')
       .select('username')
       .eq('id', user.sub)
-      .maybeSingle();
+      .single();
 
     // Redirect to profile completion if username not set
-    if (!profile?.username) {
+    if (!profile || !profile.username) {
       const url = request.nextUrl.clone();
       url.pathname = '/profile/complete';
       return NextResponse.redirect(url);

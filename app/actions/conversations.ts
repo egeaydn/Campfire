@@ -14,33 +14,30 @@ export async function createOrGetDM(otherUserId: string) {
 
   const userId = user.sub;
 
-  // Check if DM already exists between these two users
-  const { data: existingConversations } = await supabase
-    .from('conversations')
-    .select(`
-      id,
-      conversation_members!inner(user_id)
-    `)
-    .eq('type', 'dm');
+  // Find all DM conversations where current user is a member
+  const { data: myConversations } = await supabase
+    .from('conversation_members')
+    .select('conversation_id')
+    .eq('user_id', userId);
 
-  // Find DM that has exactly these two users
-  let existingDM = null;
-  if (existingConversations) {
-    for (const conv of existingConversations) {
-      const memberIds = conv.conversation_members.map((m: any) => m.user_id);
-      if (
-        memberIds.length === 2 &&
-        memberIds.includes(userId) &&
-        memberIds.includes(otherUserId)
-      ) {
-        existingDM = conv;
-        break;
-      }
+  if (myConversations && myConversations.length > 0) {
+    const conversationIds = myConversations.map(c => c.conversation_id);
+
+    // Find conversations where other user is also a member
+    const { data: sharedConversations } = await supabase
+      .from('conversation_members')
+      .select(`
+        conversation_id,
+        conversations!inner(id, type)
+      `)
+      .eq('user_id', otherUserId)
+      .in('conversation_id', conversationIds)
+      .eq('conversations.type', 'dm');
+
+    if (sharedConversations && sharedConversations.length > 0) {
+      // Return the first shared DM conversation
+      return sharedConversations[0].conversation_id;
     }
-  }
-
-  if (existingDM) {
-    return existingDM.id;
   }
 
   // Create new DM conversation

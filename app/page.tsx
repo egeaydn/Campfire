@@ -1,29 +1,48 @@
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import { Suspense } from "react";
-import { SearchBar } from "@/components/search/SearchBar";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { ConversationList } from "@/components/sidebar/ConversationList";
+import { Loader2 } from "lucide-react";
+
+async function DashboardContent() {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims;
+
+  if (!user) {
+    redirect('/auth/login');
+  }
+
+  return (
+    <div className="flex h-screen">
+      {/* Sidebar */}
+      <aside className="w-80 border-r flex flex-col">
+        <ConversationList currentUserId={user.sub} />
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 flex items-center justify-center bg-muted/30">
+        <div className="text-center space-y-4 p-8">
+          <h2 className="text-2xl font-semibold text-muted-foreground">
+            Select a conversation
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Choose from your existing conversations or start a new one
+          </p>
+        </div>
+      </main>
+    </div>
+  );
+}
 
 export default function Home() {
   return (
-    <main className="min-h-screen flex flex-col">
-      <Suspense fallback={<div className="w-full h-16 border-b border-b-foreground/10" />}>
-        <Navbar />
-      </Suspense>
-
-      <div className="flex-1 container max-w-4xl mx-auto p-8">
-        <div className="space-y-8">
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl font-bold">Welcome to Campfire</h1>
-            <p className="text-muted-foreground">
-              Start a conversation by searching for users
-            </p>
-          </div>
-
-          <SearchBar />
-        </div>
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
-
-      <Footer />
-    </main>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }

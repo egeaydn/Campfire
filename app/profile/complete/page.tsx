@@ -1,8 +1,9 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { ProfileCompletionForm } from './profile-completion-form';
+import { Suspense } from 'react';
 
-export default async function ProfileCompletePage() {
+async function ProfileCheck() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
@@ -24,9 +25,18 @@ export default async function ProfileCompletePage() {
     redirect('/');
   }
 
+  return null;
+}
+
+export default async function ProfileCompletePage() {
   return (
-    <main className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background to-muted">
-      <ProfileCompletionForm />
-    </main>
+    <>
+      <Suspense fallback={null}>
+        <ProfileCheck />
+      </Suspense>
+      <main className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background to-muted">
+        <ProfileCompletionForm />
+      </main>
+    </>
   );
 }

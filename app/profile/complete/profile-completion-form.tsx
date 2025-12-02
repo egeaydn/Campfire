@@ -73,11 +73,10 @@ export function ProfileCompletionForm() {
         bio
       });
 
-      router.push('/');
-      router.refresh();
+      // Hard redirect with page reload
+      window.location.href = '/';
     } catch (err: any) {
       setError(err.message || 'Failed to update profile');
-    } finally {
       setLoading(false);
     }
   };

@@ -45,7 +45,7 @@ export function AvatarUpload() {
   return (
     <div className="relative">
       <Avatar className="w-32 h-32">
-        <AvatarImage src={avatarUrl} />
+        {avatarUrl && <AvatarImage src={avatarUrl} />}
         <AvatarFallback className="bg-muted">
           <Camera className="w-12 h-12 text-muted-foreground" />
         </AvatarFallback>

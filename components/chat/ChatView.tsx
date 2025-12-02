@@ -5,9 +5,6 @@ import { MessageList } from '@/components/chat/MessageList';
 import { Composer } from '@/components/chat/Composer';
 import { createClient } from '@/lib/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
 import { markMessagesAsRead } from '@/app/actions/read-receipts';
 
 interface Message {
@@ -30,7 +27,6 @@ interface ChatViewProps {
 }
 
 export function ChatView({ conversation, currentUserId }: ChatViewProps) {
-  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
@@ -153,14 +149,6 @@ export function ChatView({ conversation, currentUserId }: ChatViewProps) {
     <div className="flex flex-col h-screen">
       {/* Header */}
       <header className="border-b p-4 flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push('/')}
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-
         <Avatar className="w-10 h-10">
           <AvatarImage src={chatAvatar || ''} />
           <AvatarFallback>

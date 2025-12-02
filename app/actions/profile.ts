@@ -49,6 +49,7 @@ export async function updateProfile(data: UpdateProfileInput) {
   }
 
   revalidatePath('/');
+  revalidatePath('/profile/complete');
   return { success: true };
 }
 
@@ -90,14 +91,17 @@ export async function uploadAvatar(formData: FormData) {
     throw new Error('File size must be less than 5MB');
   }
 
-  const fileName = `${userId}/${Date.now()}_${file.name}`;
+  // Clean filename and create safe path
+  const fileExt = file.name.split('.').pop();
+  const cleanFileName = `${Date.now()}.${fileExt}`;
+  const filePath = `${userId}/${cleanFileName}`;
 
   // Upload to storage
   const { error: uploadError } = await supabase.storage
     .from('avatars')
-    .upload(fileName, file, {
+    .upload(filePath, file, {
       cacheControl: '3600',
-      upsert: false
+      upsert: true
     });
 
   if (uploadError) {
@@ -107,7 +111,7 @@ export async function uploadAvatar(formData: FormData) {
   // Get public URL
   const { data: { publicUrl } } = supabase.storage
     .from('avatars')
-    .getPublicUrl(fileName);
+    .getPublicUrl(filePath);
 
   // Update profile
   const { error: updateError } = await supabase
