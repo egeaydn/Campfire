@@ -122,6 +122,8 @@ export async function createGroup({
 
   const userId = user.sub;
 
+  console.log('createGroup called:', { title, memberIds, userId });
+
   // Validate inputs
   if (!title.trim()) {
     throw new Error('Group title is required');
@@ -144,8 +146,11 @@ export async function createGroup({
     .single();
 
   if (groupError) {
+    console.error('Group creation error:', groupError);
     throw new Error(groupError.message);
   }
+
+  console.log('Group created:', newGroup);
 
   // Add creator as admin and all selected members
   const members = [
@@ -164,16 +169,21 @@ export async function createGroup({
     }
   });
 
-  console.log('Creating group with members:', members);
+  console.log('Adding members to group:', members);
 
-  const { error: membersError } = await supabase
+  const { data: insertedMembers, error: membersError } = await supabase
     .from('conversation_members')
-    .insert(members);
+    .insert(members)
+    .select();
 
   if (membersError) {
     console.error('Members insert error:', membersError);
-    throw new Error(membersError.message);
+    // Try to clean up the conversation if member insertion fails
+    await supabase.from('conversations').delete().eq('id', newGroup.id);
+    throw new Error(`Failed to add members: ${membersError.message}`);
   }
+
+  console.log('Members inserted successfully:', insertedMembers);
 
   revalidatePath('/');
 
