@@ -43,6 +43,7 @@ async function ChatContent({ conversationId }: { conversationId: string }) {
       title,
       conversation_members(
         user_id,
+        role,
         profile:profiles(username, display_name, avatar_url)
       )
     `)

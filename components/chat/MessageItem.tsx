@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Pencil, Trash2, Check, X, MoreVertical, CheckCheck } from 'lucide-react';
+import { Pencil, Trash2, Check, X, MoreVertical, CheckCheck, Download, FileText } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -74,6 +74,17 @@ export function MessageItem({ message, isOwn, isRead }: MessageItemProps) {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Determine if the file is an image
+  const isImageFile = message.file_url && (
+    message.file_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ||
+    message.file_url.includes('image/')
+  );
+
+  // Get file name from URL
+  const getFileName = (url: string) => {
+    return url.split('/').pop()?.split('?')[0] || 'file';
   };
 
   return (
@@ -144,7 +155,7 @@ export function MessageItem({ message, isOwn, isRead }: MessageItemProps) {
               )}
 
               {/* Message Actions (only for own messages) */}
-              {isOwn && (
+              {isOwn && message.content && (
                 <div className={cn(
                   "absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity",
                   isOwn ? "right-full mr-2" : "left-full ml-2"
@@ -171,16 +182,59 @@ export function MessageItem({ message, isOwn, isRead }: MessageItemProps) {
                   </DropdownMenu>
                 </div>
               )}
+
+              {/* Delete only option for file-only messages */}
+              {isOwn && !message.content && message.file_url && (
+                <div className={cn(
+                  "absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity",
+                  isOwn ? "right-full mr-2" : "left-full ml-2"
+                )}>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8"
+                    onClick={() => setShowDeleteDialog(true)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
           {/* File preview */}
           {message.file_url && (
-            <img 
-              src={message.file_url} 
-              alt="Attachment"
-              className="mt-2 rounded-lg max-w-full h-auto"
-            />
+            <div className="mt-2">
+              {isImageFile ? (
+                <a href={message.file_url} target="_blank" rel="noopener noreferrer">
+                  <img 
+                    src={message.file_url} 
+                    alt="Attachment"
+                    className="rounded-lg max-w-sm max-h-96 object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                  />
+                </a>
+              ) : (
+                <a 
+                  href={message.file_url} 
+                  download
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg border hover:bg-muted/50 transition-colors",
+                    isOwn ? "bg-primary/10" : "bg-secondary/50"
+                  )}
+                >
+                  <div className="flex items-center justify-center w-10 h-10 rounded bg-muted">
+                    <FileText className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      {getFileName(message.file_url)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Click to download</p>
+                  </div>
+                  <Download className="w-5 h-5 text-muted-foreground" />
+                </a>
+              )}
+            </div>
           )}
 
           {/* Edited indicator */}

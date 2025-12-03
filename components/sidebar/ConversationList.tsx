@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { ConversationItem } from '@/components/sidebar/ConversationItem';
 import { SearchBar } from '@/components/search/SearchBar';
+import { CreateGroupDialog } from '@/components/groups/CreateGroupDialog';
 import { Button } from '@/components/ui/button';
 import { Loader2, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -151,6 +152,11 @@ export function ConversationList({ currentUserId }: ConversationListProps) {
           </Button>
         </div>
         <SearchBar />
+        
+        {/* Create Group Button */}
+        <div className="px-4 pt-2">
+          <CreateGroupDialog />
+        </div>
       </div>
 
       {/* Conversation List */}

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { MessageList } from '@/components/chat/MessageList';
 import { Composer } from '@/components/chat/Composer';
+import { GroupInfo } from '@/components/groups/GroupInfo';
 import { createClient } from '@/lib/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { markMessagesAsRead } from '@/app/actions/read-receipts';
@@ -43,6 +44,12 @@ export function ChatView({ conversation, currentUserId }: ChatViewProps) {
   const chatAvatar = conversation.type === 'dm' && otherMember
     ? otherMember.profile.avatar_url
     : null;
+
+  // Check if current user is admin (for groups)
+  const currentUserMembership = conversation.conversation_members.find(
+    (m: any) => m.user_id === currentUserId
+  );
+  const isAdmin = currentUserMembership?.role === 'admin';
 
   useEffect(() => {
     loadMessages();
@@ -156,12 +163,22 @@ export function ChatView({ conversation, currentUserId }: ChatViewProps) {
           </AvatarFallback>
         </Avatar>
 
-        <div>
+        <div className="flex-1">
           <h3 className="font-semibold">{chatTitle}</h3>
           <p className="text-sm text-muted-foreground">
             {conversation.type === 'dm' ? 'Direct Message' : `${conversation.conversation_members.length} members`}
           </p>
         </div>
+
+        {/* Group Info Button */}
+        {conversation.type === 'group' && (
+          <GroupInfo
+            conversationId={conversation.id}
+            members={conversation.conversation_members}
+            currentUserId={currentUserId}
+            isAdmin={isAdmin}
+          />
+        )}
       </header>
 
       {/* Messages */}

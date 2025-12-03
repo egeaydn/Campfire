@@ -102,3 +102,183 @@ export async function getConversations() {
 
   return conversations;
 }
+
+export async function createGroup({
+  title,
+  memberIds,
+  avatarUrl
+}: {
+  title: string;
+  memberIds: string[];
+  avatarUrl?: string;
+}) {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims;
+
+  if (!user) {
+    throw new Error('Unauthorized');
+  }
+
+  const userId = user.sub;
+
+  // Validate inputs
+  if (!title.trim()) {
+    throw new Error('Group title is required');
+  }
+
+  if (memberIds.length === 0) {
+    throw new Error('At least one member is required');
+  }
+
+  // Create group conversation
+  const { data: newGroup, error: groupError } = await supabase
+    .from('conversations')
+    .insert({
+      type: 'group',
+      title: title.trim(),
+      avatar_url: avatarUrl || null,
+      created_by: userId
+    })
+    .select()
+    .single();
+
+  if (groupError) {
+    throw new Error(groupError.message);
+  }
+
+  // Add creator as admin and all selected members
+  const members = [
+    { conversation_id: newGroup.id, user_id: userId, role: 'admin' }
+  ];
+
+  // Add all selected members (including creator if they selected themselves)
+  memberIds.forEach(memberId => {
+    // Don't add creator twice
+    if (memberId !== userId) {
+      members.push({
+        conversation_id: newGroup.id,
+        user_id: memberId,
+        role: 'member'
+      });
+    }
+  });
+
+  console.log('Creating group with members:', members);
+
+  const { error: membersError } = await supabase
+    .from('conversation_members')
+    .insert(members);
+
+  if (membersError) {
+    console.error('Members insert error:', membersError);
+    throw new Error(membersError.message);
+  }
+
+  revalidatePath('/');
+
+  return newGroup.id;
+}
+
+export async function addGroupMember(conversationId: string, userId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const currentUser = data?.claims;
+
+  if (!currentUser) {
+    throw new Error('Unauthorized');
+  }
+
+  // Check if current user is admin
+  const { data: membership } = await supabase
+    .from('conversation_members')
+    .select('role')
+    .eq('conversation_id', conversationId)
+    .eq('user_id', currentUser.sub)
+    .single();
+
+  if (!membership || membership.role !== 'admin') {
+    throw new Error('Only admins can add members');
+  }
+
+  // Add new member
+  const { error } = await supabase
+    .from('conversation_members')
+    .insert({
+      conversation_id: conversationId,
+      user_id: userId,
+      role: 'member'
+    });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath(`/chat/${conversationId}`);
+}
+
+export async function removeGroupMember(conversationId: string, userId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const currentUser = data?.claims;
+
+  if (!currentUser) {
+    throw new Error('Unauthorized');
+  }
+
+  console.log('Removing member:', { conversationId, userId, currentUserId: currentUser.sub });
+
+  // Check if current user is admin
+  const { data: membership } = await supabase
+    .from('conversation_members')
+    .select('role')
+    .eq('conversation_id', conversationId)
+    .eq('user_id', currentUser.sub)
+    .single();
+
+  console.log('Current user membership:', membership);
+
+  if (!membership || membership.role !== 'admin') {
+    throw new Error('Only admins can remove members');
+  }
+
+  // Remove member
+  const { error } = await supabase
+    .from('conversation_members')
+    .delete()
+    .eq('conversation_id', conversationId)
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('Remove member error:', error);
+    throw new Error(error.message);
+  }
+
+  console.log('Member removed successfully');
+
+  revalidatePath(`/chat/${conversationId}`);
+  revalidatePath('/');
+}
+
+export async function leaveGroup(conversationId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims;
+
+  if (!user) {
+    throw new Error('Unauthorized');
+  }
+
+  // Remove user from conversation
+  const { error } = await supabase
+    .from('conversation_members')
+    .delete()
+    .eq('conversation_id', conversationId)
+    .eq('user_id', user.sub);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath('/');
+}
