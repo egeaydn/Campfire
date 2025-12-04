@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { MessageList } from '@/components/chat/MessageList';
 import { Composer } from '@/components/chat/Composer';
 import { GroupInfo } from '@/components/groups/GroupInfo';
+import { StatusBadge } from '@/components/presence/StatusBadge';
 import { createClient } from '@/lib/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { markMessagesAsRead } from '@/app/actions/read-receipts';
@@ -165,9 +166,13 @@ export function ChatView({ conversation, currentUserId }: ChatViewProps) {
 
         <div className="flex-1">
           <h3 className="font-semibold">{chatTitle}</h3>
-          <p className="text-sm text-muted-foreground">
-            {conversation.type === 'dm' ? 'Direct Message' : `${conversation.conversation_members.length} members`}
-          </p>
+          {conversation.type === 'dm' && otherMember ? (
+            <StatusBadge userId={otherMember.user_id} showText />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {conversation.conversation_members.length} members
+            </p>
+          )}
         </div>
 
         {/* Group Info Button */}

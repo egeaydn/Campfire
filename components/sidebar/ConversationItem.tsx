@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/presence/StatusBadge';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -61,13 +62,21 @@ export function ConversationItem({ conversation, currentUserId }: ConversationIt
       className="flex items-center gap-3 p-4 hover:bg-accent cursor-pointer transition-colors"
       onClick={() => router.push(`/chat/${conversation.id}`)}
     >
-      {/* Avatar */}
-      <Avatar className="w-12 h-12">
-        <AvatarImage src={avatarUrl || ''} />
-        <AvatarFallback>
-          {displayName.slice(0, 2).toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
+      {/* Avatar with Status Badge */}
+      <div className="relative">
+        <Avatar className="w-12 h-12">
+          <AvatarImage src={avatarUrl || ''} />
+          <AvatarFallback>
+            {displayName.slice(0, 2).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+        {/* Show status badge only for DMs */}
+        {conversation.type === 'dm' && otherMember && (
+          <div className="absolute bottom-0 right-0">
+            <StatusBadge userId={otherMember.user_id} />
+          </div>
+        )}
+      </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
