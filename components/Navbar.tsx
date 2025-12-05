@@ -6,12 +6,24 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "./ui/button";
 import { LogoutButton } from "./logout-button";
 import { ThemeSwitcher } from "./theme-switcher";
+import { Shield } from "lucide-react";
 import Image from "next/image";
 
 export default async function Navbar() {
     const supabase = await createClient();
     const { data } = await supabase.auth.getClaims();
     const user = data?.claims;
+
+    // Check if user is admin
+    let isAdmin = false;
+    if (user?.sub) {
+      const { data: adminCheck } = await supabase
+        .from("admin_users")
+        .select("id")
+        .eq("user_id", user.sub)
+        .single();
+      isAdmin = !!adminCheck;
+    }
 
     return(
         <nav className="w-full border-b border-border/20 bg-background/80 backdrop-blur-md sticky top-0 z-50">
@@ -49,6 +61,14 @@ export default async function Navbar() {
               ) : user ? (
                 <>
                   <ThemeSwitcher />
+                  {isAdmin && (
+                    <Button asChild size="sm" variant="outline">
+                      <Link href="/admin" className="flex items-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        Admin
+                      </Link>
+                    </Button>
+                  )}
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-medium">{user.email}</span>
                     <LogoutButton />

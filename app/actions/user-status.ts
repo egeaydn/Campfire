@@ -10,7 +10,8 @@ export async function updateUserStatus(status: UserStatus) {
   const userId = data?.claims?.sub;
 
   if (!userId) {
-    throw new Error("Unauthorized");
+    // User not authenticated, silently return
+    return;
   }
 
   const { error } = await supabase

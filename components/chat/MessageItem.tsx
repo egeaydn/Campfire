@@ -7,11 +7,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Pencil, Trash2, Check, X, MoreVertical, CheckCheck, Download, FileText } from 'lucide-react';
+import { ReportButton } from '@/components/moderation/ReportButton';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
@@ -178,6 +180,25 @@ export function MessageItem({ message, isOwn, isRead }: MessageItemProps) {
                         <Trash2 className="w-4 h-4 mr-2" />
                         Delete
                       </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
+
+              {/* Report Button (for other users' messages) */}
+              {!isOwn && (message.content || message.file_url) && (
+                <div className={cn(
+                  "absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity",
+                  "right-full mr-2"
+                )}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <ReportButton messageId={message.id} variant="menuItem" />
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
