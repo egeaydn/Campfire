@@ -53,8 +53,6 @@ export function MessageItem({ message, isOwn, isRead, onReactionChange }: Messag
   const [loading, setLoading] = useState(false);
   const [reactions, setReactions] = useState<Array<{ emoji: string; count: number; userIds: string[] }>>([]);
   const [userReactions, setUserReactions] = useState<string[]>([]);
-  const [reactions, setReactions] = useState<Array<{ emoji: string; count: number; userIds: string[] }>>([]);
-  const [userReactions, setUserReactions] = useState<string[]>([]);
 
   // Reaksiyonları yükle
   useEffect(() => {

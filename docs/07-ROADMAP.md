@@ -268,35 +268,40 @@
   - [x] Display "X is typing..."
   - [x] Timeout after inactivity
 
-- [ ] **Message Search** 🔄 SONRAKİ
-  - [ ] Full-text search
-  - [ ] Search within conversation
-  - [ ] Search across all conversations
+- [x] **Message Search** ✅ TAMAMLANDI
+  - [x] Full-text search (PostgreSQL FTS)
+  - [x] Search within conversation
+  - [x] Search across all conversations
+  - [x] SearchBar component with recent searches
 
-- [ ] **Voice Messages**
-  - [ ] Audio recording
-  - [ ] Audio playback
-  - [ ] Waveform visualization
+- [x] **Voice Messages** ✅ TAMAMLANDI
+  - [x] Audio recording (MediaRecorder API)
+  - [x] Audio playback
+  - [x] Duration display
+  - [x] VoiceRecorder component
 
-- [ ] **Push Notifications**
-  - [ ] Web Push API
-  - [ ] Notification preferences
-  - [ ] Unread count badge
+- [x] **Push Notifications** ✅ TAMAMLANDI
+  - [x] Web Push API setup
+  - [x] Notification preferences
+  - [x] Push subscriptions
+  - [x] Notification triggers
 
-- [ ] **Link Previews**
-  - [ ] Detect URLs in messages
-  - [ ] Fetch metadata
-  - [ ] Display preview card
+- [x] **Link Previews** ✅ TAMAMLANDI
+  - [x] Detect URLs in messages (regex)
+  - [x] Fetch metadata (Open Graph)
+  - [x] Display preview card
+  - [x] link_previews caching
 
-- [ ] **Message Threads**
-  - [ ] Reply to specific message
-  - [ ] Thread view
-  - [ ] Thread notifications
+- [x] **Message Threads** ✅ TAMAMLANDI
+  - [x] Reply to specific message (reply_to_id)
+  - [x] Thread count display
+  - [x] get_thread_messages function
 
-- [ ] **End-to-End Encryption**
-  - [ ] Key exchange
-  - [ ] Encrypt messages client-side
-  - [ ] Decrypt on receive
+- [x] **End-to-End Encryption** ✅ TAMAMLANDI
+  - [x] RSA key pair management
+  - [x] AES-GCM message encryption
+  - [x] encrypted_messages table
+  - [x] SubtleCrypto implementation guide
 
 ---
 
