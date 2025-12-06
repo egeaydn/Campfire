@@ -5,6 +5,7 @@ import { MessageList } from '@/components/chat/MessageList';
 import { Composer } from '@/components/chat/Composer';
 import { GroupInfo } from '@/components/groups/GroupInfo';
 import { StatusBadge } from '@/components/presence/StatusBadge';
+import { TypingIndicator } from '@/components/chat/TypingIndicator';
 import { createClient } from '@/lib/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { markMessagesAsRead } from '@/app/actions/read-receipts';
@@ -31,6 +32,7 @@ interface ChatViewProps {
 export function ChatView({ conversation, currentUserId }: ChatViewProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [typingUsers, setTypingUsers] = useState<Array<{ user_id: string; username: string }>>([]);
   const supabase = createClient();
 
   // Get other user info for DM
@@ -54,10 +56,18 @@ export function ChatView({ conversation, currentUserId }: ChatViewProps) {
 
   useEffect(() => {
     loadMessages();
-    subscribeToMessages();
+    const messagesCleanup = subscribeToMessages();
+    const reactionsCleanup = subscribeToReactions();
+    const typingCleanup = subscribeToTyping();
     
     // Mark messages as read when viewing conversation
     markMessagesAsRead(conversation.id);
+
+    return () => {
+      messagesCleanup();
+      reactionsCleanup();
+      typingCleanup();
+    };
   }, [conversation.id]);
 
   const loadMessages = async () => {
@@ -153,6 +163,60 @@ export function ChatView({ conversation, currentUserId }: ChatViewProps) {
     };
   };
 
+  // Reaksiyon güncellemelerini dinle
+  const subscribeToReactions = () => {
+    const channel = supabase
+      .channel(`reactions:${conversation.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE hepsini dinle
+          schema: 'public',
+          table: 'message_reactions',
+        },
+        (payload) => {
+          // MessageList'i yeniden render et - reaksiyonlar değiştiğinde
+          // Her mesaj kendi reaksiyonlarını yükleyecek
+          setMessages((prev) => [...prev]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  // Typing indicator'ları dinle
+  const subscribeToTyping = () => {
+    const channel = supabase
+      .channel(`typing:${conversation.id}`)
+      .on('broadcast', { event: 'typing' }, (payload: any) => {
+        const { user_id, username, isTyping } = payload.payload;
+        
+        // Kendi typing'imizi gösterme
+        if (user_id === currentUserId) return;
+
+        setTypingUsers((prev) => {
+          if (isTyping) {
+            // Kullanıcı yazıyor - listeye ekle (zaten yoksa)
+            if (!prev.find((u) => u.user_id === user_id)) {
+              return [...prev, { user_id, username }];
+            }
+          } else {
+            // Kullanıcı yazmayı bıraktı - listeden çıkar
+            return prev.filter((u) => u.user_id !== user_id);
+          }
+          return prev;
+        });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
   return (
     <div className="flex flex-col h-screen">
       {/* Header */}
@@ -194,8 +258,15 @@ export function ChatView({ conversation, currentUserId }: ChatViewProps) {
         conversationType={conversation.type}
       />
 
+      {/* Typing Indicator */}
+      <TypingIndicator usernames={typingUsers.map((u) => u.username)} />
+
       {/* Composer */}
-      <Composer conversationId={conversation.id} />
+      <Composer 
+        conversationId={conversation.id}
+        userId={currentUserId}
+        username={currentUserMembership?.profile?.username}
+      />
     </div>
   );
 }

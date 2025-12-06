@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,6 +8,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Pencil, Trash2, Check, X, MoreVertical, CheckCheck, Download, FileText } from 'lucide-react';
 import { ReportButton } from '@/components/moderation/ReportButton';
+import { EmojiPicker } from '@/components/chat/EmojiPicker';
+import { toggleReaction, getMessageReactions, getUserReactionsForMessage } from '@/app/actions/reactions';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,13 +43,46 @@ interface MessageItemProps {
   };
   isOwn: boolean;
   isRead?: boolean; // For DM read receipts
+  onReactionChange?: () => void; // Callback for realtime updates
 }
 
-export function MessageItem({ message, isOwn, isRead }: MessageItemProps) {
+export function MessageItem({ message, isOwn, isRead, onReactionChange }: MessageItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(message.content || '');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [reactions, setReactions] = useState<Array<{ emoji: string; count: number; userIds: string[] }>>([]);
+  const [userReactions, setUserReactions] = useState<string[]>([]);
+  const [reactions, setReactions] = useState<Array<{ emoji: string; count: number; userIds: string[] }>>([]);
+  const [userReactions, setUserReactions] = useState<string[]>([]);
+
+  // Reaksiyonları yükle
+  useEffect(() => {
+    loadReactions();
+  }, [message.id]);
+
+  const loadReactions = async () => {
+    try {
+      const [messageReactions, userEmojis] = await Promise.all([
+        getMessageReactions(message.id),
+        getUserReactionsForMessage(message.id),
+      ]);
+      setReactions(messageReactions);
+      setUserReactions(userEmojis);
+    } catch (error) {
+      console.error('Failed to load reactions:', error);
+    }
+  };
+
+  const handleReactionClick = async (emoji: string) => {
+    try {
+      await toggleReaction({ messageId: message.id, emoji });
+      await loadReactions();
+      onReactionChange?.();
+    } catch (error) {
+      console.error('Failed to toggle reaction:', error);
+    }
+  };
 
   const handleEdit = async () => {
     if (!editedContent.trim() || editedContent === message.content) {
@@ -264,6 +299,33 @@ export function MessageItem({ message, isOwn, isRead }: MessageItemProps) {
               (edited)
             </span>
           )}
+
+          {/* Reactions */}
+          {reactions.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {reactions.map((reaction) => (
+                <button
+                  key={reaction.emoji}
+                  onClick={() => handleReactionClick(reaction.emoji)}
+                  className={cn(
+                    "flex items-center gap-1 px-2 py-1 rounded-full text-sm transition-colors",
+                    "hover:bg-accent border",
+                    userReactions.includes(reaction.emoji)
+                      ? "bg-accent border-primary"
+                      : "bg-background border-border"
+                  )}
+                >
+                  <span>{reaction.emoji}</span>
+                  <span className="text-xs text-muted-foreground">{reaction.count}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Emoji Picker for adding reactions */}
+          <div className="mt-1">
+            <EmojiPicker onEmojiSelect={handleReactionClick} size="sm" />
+          </div>
 
           {/* Read receipt (only for own messages in DMs) */}
           {isOwn && isRead && (

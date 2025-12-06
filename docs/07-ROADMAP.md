@@ -258,17 +258,17 @@
 ## 🎁 Phase 10: Stretch Goals (Post-MVP)
 
 ### Nice-to-Have Features
-- [ ] **Message Reactions**
-  - [ ] Emoji reactions
-  - [ ] Reaction counts
-  - [ ] Realtime reaction updates
+- [x] **Message Reactions** ✅ TAMAMLANDI
+  - [x] Emoji reactions
+  - [x] Reaction counts
+  - [x] Realtime reaction updates
 
-- [ ] **Typing Indicators**
-  - [ ] Broadcast typing status
-  - [ ] Display "X is typing..."
-  - [ ] Timeout after inactivity
+- [x] **Typing Indicators** ✅ TAMAMLANDI
+  - [x] Broadcast typing status
+  - [x] Display "X is typing..."
+  - [x] Timeout after inactivity
 
-- [ ] **Message Search**
+- [ ] **Message Search** 🔄 SONRAKİ
   - [ ] Full-text search
   - [ ] Search within conversation
   - [ ] Search across all conversations

@@ -1,41 +1,30 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# Campfire - Real-time Messaging App
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
+A modern, real-time messaging application built with Next.js 16, Supabase, and TypeScript.
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+## 🚀 Features
 
-## Features
+- ✅ **Authentication** - Sign up, login with Supabase Auth
+- ✅ **Real-time Messaging** - Instant message delivery with Supabase Realtime
+- ✅ **Direct Messages** - One-on-one conversations
+- ✅ **Group Chats** - Create and manage group conversations
+- ✅ **File Upload** - Share images and documents
+- ✅ **User Presence** - Online/offline status tracking
+- ✅ **Message Features** - Edit, delete messages with read receipts
+- ✅ **Moderation** - Report system and admin dashboard
+- ✅ **Responsive Design** - Works on desktop and mobile
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Proxy
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+## 🛠️ Tech Stack
 
-## Demo
-
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+- **Framework**: Next.js 16 (App Router)
+- **Database**: Supabase (PostgreSQL)
+- **Real-time**: Supabase Realtime
+- **Storage**: Supabase Storage
+- **Auth**: Supabase Auth
+- **Styling**: Tailwind CSS
+- **UI Components**: Radix UI + Shadcn/ui
+- **Testing**: Jest + React Testing Library + Playwright
+- **Deployment**: Vercel
 
 ## Deploy to Vercel
 
@@ -49,61 +38,124 @@ The above will also clone the Starter kit to your GitHub, you can clone that loc
 
 If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
 
-## Clone and run locally
+## Installation
 
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
-
-2. Create a Next.js app using the Supabase Starter template npx command
-
+1. **Clone the repository**
    ```bash
-   npx create-next-app --example with-supabase with-supabase-app
+   git clone <your-repo-url>
+   cd Campfire
    ```
 
+2. **Install dependencies**
    ```bash
-   yarn create next-app --example with-supabase with-supabase-app
+   npm install
    ```
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
+3. **Set up Supabase**
+   - Create a new project at [supabase.com](https://supabase.com/dashboard)
+   - Copy `.env.example` to `.env.local`
+   - Add your Supabase project URL and anon key:
+     ```env
+     NEXT_PUBLIC_SUPABASE_URL=your-project-url
+     NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+     ```
 
-3. Use `cd` to change into the app's directory
+4. **Run database migrations**
+   - Execute the SQL files in order from the SQL Editor in your Supabase dashboard:
+     1. `supabase-setup.sql`
+     2. `supabase-realtime-setup.sql`
+     3. `supabase-group-chat-setup.sql`
+     4. `supabase-moderation-setup.sql`
 
-   ```bash
-   cd with-supabase-app
-   ```
+5. **Create storage bucket**
+   - In Supabase dashboard: Storage → Create bucket → `message-files` (public)
 
-4. Rename `.env.example` to `.env.local` and update the following:
+6. **Enable Realtime**
+   - Database → Replication → Enable for: `messages`, `conversations`, `conversation_members`, `user_status`, `profiles`
 
-  ```env
-  NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=[INSERT SUPABASE PROJECT API PUBLISHABLE OR ANON KEY]
-  ```
-  > [!NOTE]
-  > This example uses `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, which refers to Supabase's new **publishable** key format.
-  > Both legacy **anon** keys and new **publishable** keys can be used with this variable name during the transition period. Supabase's dashboard may show `NEXT_PUBLIC_SUPABASE_ANON_KEY`; its value can be used in this example.
-  > See the [full announcement](https://github.com/orgs/supabase/discussions/29260) for more information.
-
-  Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
-
-5. You can now run the Next.js local development server:
-
+7. **Start development server**
    ```bash
    npm run dev
    ```
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+8. **Create your first admin user** (optional)
+   ```sql
+   INSERT INTO admin_users (user_id, role)
+   VALUES ('your-user-id-from-auth-users', 'admin');
+   ```
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+Visit [http://localhost:3000](http://localhost:3000) to see the app.
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+## Testing
 
-## Feedback and issues
+```bash
+# Run unit tests
+npm test
 
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
+# Run tests in watch mode
+npm run test:watch
 
-## More Supabase examples
+# Generate coverage report
+npm run test:coverage
 
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+# Run E2E tests
+npm run test:e2e
+
+# Run E2E tests with UI
+npm run test:e2e:ui
+```
+
+## Deployment
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for comprehensive deployment instructions for Vercel and production Supabase setup.
+
+Quick steps:
+1. Push code to GitHub
+2. Connect repository to Vercel
+3. Add environment variables in Vercel dashboard
+4. Deploy automatically on push to main
+
+## Project Structure
+
+```
+app/                    # Next.js app router pages
+  actions/             # Server actions for data operations
+  api/                 # API routes
+  auth/                # Authentication pages
+  admin/               # Admin dashboard pages
+components/            # React components
+  chat/                # Chat-related components
+  moderation/          # Moderation components
+  ui/                  # Shadcn UI components
+lib/                   # Utilities and Supabase clients
+docs/                  # Documentation
+e2e/                   # Playwright E2E tests
+```
+
+## Roadmap
+
+See [docs/07-ROADMAP.md](docs/07-ROADMAP.md) for the full development roadmap.
+
+**Completed:**
+- ✅ Phase 1-6: Core messaging, DMs, groups, files, presence
+- ✅ Phase 7: Moderation & admin dashboard
+- ✅ Phase 8: Testing infrastructure
+- ✅ Phase 9: CI/CD & deployment
+
+**Next Steps (Stretch Goals):**
+- Message reactions
+- Typing indicators
+- Full-text search
+- Voice messages
+- Push notifications
+- Link previews
+- Message threads
+- End-to-end encryption
+
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request.
+
+## License
+
+MIT
