@@ -25,7 +25,7 @@ export default async function SearchPage() {
           </p>
         </div>
 
-        <SearchBar placeholder="Search messages, files, links..." />
+        <SearchBar />
       </div>
     </div>
   );

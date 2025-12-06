@@ -14,7 +14,6 @@ async function AdminCheck() {
     redirect("/auth/login");
   }
 
-  // Check if user is admin
   const { data: adminCheck } = await supabase
     .from("admin_users")
     .select("id, role")
