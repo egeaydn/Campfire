@@ -4,41 +4,37 @@ import { SupabaseLogo } from "./supabase-logo";
 export function Hero() {
   return (
     <div className="flex flex-col gap-16 items-center">
-      <div className="flex gap-8 justify-center items-center">
-        <a
-          href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
-          target="_blank"
-          rel="noreferrer"
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-campfire-light via-campfire-medium to-campfire-dark blur-3xl opacity-20 rounded-full" />
+        <h1 className="text-6xl lg:text-8xl font-bold text-center relative">
+          <span className="bg-gradient-to-r from-campfire-dark via-campfire-medium to-campfire-light bg-clip-text text-transparent">
+            Campfire
+          </span>
+        </h1>
+      </div>
+      
+      <p className="text-xl lg:text-2xl !leading-tight mx-auto max-w-2xl text-center text-muted-foreground">
+        Connect, chat, and collaborate in real-time with your team.
+        <br />
+        <span className="text-campfire-medium font-semibold">Secure. Fast. Simple.</span>
+      </p>
+
+      <div className="flex gap-4">
+        <a 
+          href="/auth/sign-up"
+          className="px-8 py-3 bg-gradient-to-r from-campfire-medium to-campfire-light text-white rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200"
         >
-          <SupabaseLogo />
+          Get Started
         </a>
-        <span className="border-l rotate-45 h-6" />
-        <a href="https://nextjs.org/" target="_blank" rel="noreferrer">
-          <NextLogo />
+        <a 
+          href="/auth/login"
+          className="px-8 py-3 border-2 border-campfire-medium text-campfire-medium rounded-lg font-semibold hover:bg-campfire-medium hover:text-white transition-all duration-200"
+        >
+          Sign In
         </a>
       </div>
-      <h1 className="sr-only">Supabase and Next.js Starter Template</h1>
-      <p className="text-3xl lg:text-4xl !leading-tight mx-auto max-w-xl text-center">
-        The fastest way to build apps with{" "}
-        <a
-          href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
-          target="_blank"
-          className="font-bold hover:underline"
-          rel="noreferrer"
-        >
-          Supabase
-        </a>{" "}
-        and{" "}
-        <a
-          href="https://nextjs.org/"
-          target="_blank"
-          className="font-bold hover:underline"
-          rel="noreferrer"
-        >
-          Next.js
-        </a>
-      </p>
-      <div className="w-full p-[1px] bg-gradient-to-r from-transparent via-foreground/10 to-transparent my-8" />
+      
+      <div className="w-full p-[1px] bg-gradient-to-r from-transparent via-campfire-light to-transparent my-8" />
     </div>
   );
 }

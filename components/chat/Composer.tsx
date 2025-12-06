@@ -3,10 +3,11 @@
 import { useState, KeyboardEvent, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, Loader2, Paperclip, X, Image as ImageIcon, File } from 'lucide-react';
+import { Send, Loader2, Paperclip, X, Image as ImageIcon, File, Mic } from 'lucide-react';
 import { sendMessage } from '@/app/actions/messages';
 import { uploadFile } from '@/app/actions/files';
 import { createClient } from '@/lib/supabase/client';
+import { VoiceRecorder } from './VoiceRecorder';
 
 interface ComposerProps {
   conversationId: string;
@@ -20,6 +21,7 @@ export function Composer({ conversationId, userId, username }: ComposerProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const channelRef = useRef<any>(null);
@@ -152,8 +154,52 @@ export function Composer({ conversationId, userId, username }: ComposerProps) {
     }
   };
 
+  const handleVoiceRecordComplete = async (audioBlob: Blob) => {
+    setSending(true);
+    setUploading(true);
+    setShowVoiceRecorder(false);
+
+    try {
+      // Convert blob to file
+      const audioFile = new File([audioBlob], `voice-${Date.now()}.webm`, {
+        type: 'audio/webm;codecs=opus',
+      });
+
+      // Upload audio file
+      const formData = new FormData();
+      formData.append('file', audioFile);
+
+      const result = await uploadFile(formData);
+      if (!result.success) {
+        alert(result.error || 'Failed to upload voice message');
+        return;
+      }
+
+      // Send message with voice file
+      await sendMessage({
+        conversationId,
+        content: undefined,
+        fileUrl: result.url,
+      });
+    } catch (error) {
+      console.error('Failed to send voice message:', error);
+    } finally {
+      setSending(false);
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="border-t p-4">
+      {/* Voice Recorder */}
+      {showVoiceRecorder && (
+        <div className="mb-3">
+          <VoiceRecorder
+            onRecordComplete={handleVoiceRecordComplete}
+            onCancel={() => setShowVoiceRecorder(false)}
+          />
+        </div>
+      )}
       {/* File preview */}
       {selectedFile && (
         <div className="mb-3 p-3 border rounded-lg bg-muted/50">
@@ -201,10 +247,20 @@ export function Composer({ conversationId, userId, username }: ComposerProps) {
           onClick={() => fileInputRef.current?.click()}
           variant="outline"
           size="icon"
-          disabled={sending || !!selectedFile}
+          disabled={sending || !!selectedFile || showVoiceRecorder}
           className="h-[60px] w-[60px]"
         >
           <Paperclip className="w-5 h-5" />
+        </Button>
+
+        <Button
+          onClick={() => setShowVoiceRecorder(!showVoiceRecorder)}
+          variant="outline"
+          size="icon"
+          disabled={sending || !!selectedFile}
+          className="h-[60px] w-[60px]"
+        >
+          <Mic className="w-5 h-5" />
         </Button>
 
         <Textarea
@@ -213,13 +269,13 @@ export function Composer({ conversationId, userId, username }: ComposerProps) {
           onKeyDown={handleKeyDown}
           placeholder={selectedFile ? "Add a caption (optional)..." : "Type a message... (Shift+Enter for new line)"}
           className="min-h-[60px] max-h-[200px] resize-none"
-          disabled={sending}
+          disabled={sending || showVoiceRecorder}
         />
 
         <Button 
           onClick={handleSend} 
           size="icon"
-          disabled={(!content.trim() && !selectedFile) || sending}
+          disabled={(!content.trim() && !selectedFile) || sending || showVoiceRecorder}
           className="h-[60px] w-[60px]"
         >
           {sending ? (

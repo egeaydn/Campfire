@@ -51,6 +51,12 @@ export default {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
+        campfire: {
+          dark: "#1B3C53",
+          medium: "#234C6A",
+          light: "#456882",
+          gray: "#E3E3E3",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

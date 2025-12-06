@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Pencil, Trash2, Check, X, MoreVertical, CheckCheck, Download, FileText } from 'lucide-react';
+import { Pencil, Trash2, Check, X, MoreVertical, CheckCheck, Download, FileText, CornerUpLeft, MessageCircle } from 'lucide-react';
 import { ReportButton } from '@/components/moderation/ReportButton';
 import { EmojiPicker } from '@/components/chat/EmojiPicker';
 import { toggleReaction, getMessageReactions, getUserReactionsForMessage } from '@/app/actions/reactions';
@@ -36,6 +36,8 @@ interface MessageItemProps {
     file_url: string | null;
     created_at: string;
     edited_at: string | null;
+    reply_to_id?: string | null;
+    thread_count?: number;
     sender: {
       username: string;
       avatar_url: string | null;
@@ -44,9 +46,18 @@ interface MessageItemProps {
   isOwn: boolean;
   isRead?: boolean; // For DM read receipts
   onReactionChange?: () => void; // Callback for realtime updates
+  onReplyClick?: (messageId: string) => void; // Callback for reply button
+  onThreadClick?: (messageId: string) => void; // Callback to open thread view
+  parentMessage?: {
+    id: string;
+    content: string | null;
+    sender: {
+      username: string;
+    };
+  } | null;
 }
 
-export function MessageItem({ message, isOwn, isRead, onReactionChange }: MessageItemProps) {
+export function MessageItem({ message, isOwn, isRead, onReactionChange, onReplyClick, onThreadClick, parentMessage }: MessageItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(message.content || '');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -178,6 +189,25 @@ export function MessageItem({ message, isOwn, isRead, onReactionChange }: Messag
             </div>
           ) : (
             <div className="relative group">
+              {/* Parent Message Preview (if this is a reply) */}
+              {parentMessage && (
+                <div 
+                  className={cn(
+                    "mb-2 p-2 border-l-2 border-primary/50 bg-muted/30 rounded text-sm cursor-pointer hover:bg-muted/50 transition-colors",
+                    isOwn ? "ml-2" : "mr-2"
+                  )}
+                  onClick={() => onThreadClick?.(parentMessage.id)}
+                >
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                    <CornerUpLeft className="w-3 h-3" />
+                    <span>Reply to {parentMessage.sender.username}</span>
+                  </div>
+                  <p className="text-muted-foreground truncate">
+                    {parentMessage.content || "Attachment"}
+                  </p>
+                </div>
+              )}
+
               {message.content && (
                 <div className={cn(
                   "px-4 py-2 rounded-2xl break-words",
@@ -321,8 +351,34 @@ export function MessageItem({ message, isOwn, isRead, onReactionChange }: Messag
           )}
 
           {/* Emoji Picker for adding reactions */}
-          <div className="mt-1">
+          <div className="mt-1 flex items-center gap-2">
             <EmojiPicker onEmojiSelect={handleReactionClick} size="sm" />
+            
+            {/* Reply Button */}
+            {onReplyClick && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onReplyClick(message.id)}
+                className="h-7 px-2 text-xs"
+              >
+                <CornerUpLeft className="w-3 h-3 mr-1" />
+                Reply
+              </Button>
+            )}
+
+            {/* Thread Count (if has replies) */}
+            {message.thread_count && message.thread_count > 0 && onThreadClick && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onThreadClick(message.id)}
+                className="h-7 px-2 text-xs"
+              >
+                <MessageCircle className="w-3 h-3 mr-1" />
+                {message.thread_count} {message.thread_count === 1 ? 'reply' : 'replies'}
+              </Button>
+            )}
           </div>
 
           {/* Read receipt (only for own messages in DMs) */}
