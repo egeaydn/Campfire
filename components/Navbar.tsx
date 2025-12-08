@@ -63,13 +63,13 @@ export default async function Navbar() {
             <div className="flex items-center justify-center">
               <Link href={"/"} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <Image 
-                  src="/campfire-logo.png" 
+                  src="/campfire-logo.svg" 
                   alt="Campfire" 
-                  width={140} 
-                  height={140}
+                  width={48} 
+                  height={48}
                   quality={100}
                   priority
-                  className="w-32 h-32 drop-shadow-2xl"
+                  className="w-12 h-12 drop-shadow-2xl"
                   unoptimized
                 />
               </Link>

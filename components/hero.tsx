@@ -1,10 +1,18 @@
-import { NextLogo } from "./next-logo";
-import { SupabaseLogo } from "./supabase-logo";
+import Image from "next/image";
 
 export function Hero() {
   return (
     <div className="flex flex-col gap-16 items-center">
-      <div className="relative">
+      <div className="relative flex flex-col items-center gap-6">
+        <Image 
+          src="/campfire-logo.svg" 
+          alt="Campfire Logo" 
+          width={100} 
+          height={100}
+          className="drop-shadow-2xl animate-pulse"
+          priority
+          unoptimized
+        />
         <div className="absolute inset-0 bg-gradient-to-r from-campfire-light via-campfire-medium to-campfire-dark blur-3xl opacity-20 rounded-full" />
         <h1 className="text-6xl lg:text-8xl font-bold text-center relative">
           <span className="bg-gradient-to-r from-campfire-dark via-campfire-medium to-campfire-light bg-clip-text text-transparent">

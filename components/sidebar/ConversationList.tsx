@@ -8,6 +8,7 @@ import { CreateGroupDialog } from '@/components/groups/CreateGroupDialog';
 import { Button } from '@/components/ui/button';
 import { Loader2, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 interface Conversation {
   id: string;
@@ -173,7 +174,17 @@ export function ConversationList({ currentUserId }: ConversationListProps) {
       {/* Header */}
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold">Messages</h2>
+          <div className="flex items-center gap-3">
+            <Image 
+              src="/campfire-logo.png" 
+              alt="Campfire" 
+              width={82} 
+              height={82}
+              className="drop-shadow-lg"
+              unoptimized
+            />
+            <h2 className="text-xl font-bold">Messages</h2>
+          </div>
           <Button
             variant="ghost"
             size="icon"
