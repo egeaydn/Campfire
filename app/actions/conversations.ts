@@ -5,14 +5,13 @@ import { revalidatePath } from 'next/cache';
 
 export async function createOrGetDM(otherUserId: string) {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims;
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     throw new Error('Unauthorized');
   }
 
-  const userId = user.sub;
+  const userId = user.id;
 
   // Find all DM conversations where current user is a member
   const { data: myConversations } = await supabase
@@ -41,6 +40,8 @@ export async function createOrGetDM(otherUserId: string) {
   }
 
   // Create new DM conversation
+  console.log('[createOrGetDM] Creating conversation with userId:', userId);
+  
   const { data: newConv, error: convError } = await supabase
     .from('conversations')
     .insert({
@@ -51,8 +52,12 @@ export async function createOrGetDM(otherUserId: string) {
     .single();
 
   if (convError) {
-    throw new Error(convError.message);
+    console.error('[createOrGetDM] Insert error:', convError);
+    console.error('[createOrGetDM] userId:', userId);
+    throw new Error(`Failed to create conversation: ${convError.message} (userId: ${userId})`);
   }
+  
+  console.log('[createOrGetDM] Conversation created:', newConv.id);
 
   // Add both users as members
   const { error: membersError } = await supabase

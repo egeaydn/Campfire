@@ -15,6 +15,7 @@ interface Conversation {
   title: string | null;
   avatar_url: string | null;
   updated_at: string;
+  is_group: boolean;
   conversation_members: Array<{
     user_id: string;
     profile: {
@@ -59,34 +60,70 @@ export function ConversationList({ currentUserId }: ConversationListProps) {
   };
 
   const loadConversations = async () => {
-    const { data, error } = await supabase
-      .from('conversations')
-      .select(`
-        id,
-        type,
-        title,
-        avatar_url,
-        updated_at,
-        conversation_members!inner(
-          user_id,
-          profile:profiles(username, display_name, avatar_url)
-        ),
-        messages(content, created_at, sender_id)
-      `)
-      .eq('conversation_members.user_id', currentUserId)
-      .order('updated_at', { ascending: false });
+    try {
+      // First, get conversation IDs where user is a member
+      const { data: memberData, error: memberError } = await supabase
+        .from('conversation_members')
+        .select('conversation_id')
+        .eq('user_id', currentUserId);
 
-    if (data) {
-      // Get last message for each conversation
-      const conversationsWithLastMessage = data.map((conv: any) => ({
-        ...conv,
-        messages: conv.messages.sort((a: any, b: any) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        ).slice(0, 1)
-      }));
-      setConversations(conversationsWithLastMessage);
+      if (memberError) {
+        console.error('Error fetching member data:', memberError);
+        throw memberError;
+      }
+      
+      if (!memberData || memberData.length === 0) {
+        setConversations([]);
+        setLoading(false);
+        return;
+      }
+
+      const conversationIds = memberData.map((m) => m.conversation_id);
+
+      // Get full conversation details
+      const { data, error } = await supabase
+        .from('conversations')
+        .select(`
+          id,
+          type,
+          title,
+          avatar_url,
+          updated_at,
+          conversation_members(
+            user_id,
+            profile:profiles(username, display_name, avatar_url)
+          ),
+          messages(content, created_at, sender_id)
+        `)
+        .in('id', conversationIds)
+        .order('updated_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching conversations:', error);
+        throw error;
+      }
+
+      if (data) {
+        console.log('Loaded conversations:', data);
+        // Get last message for each conversation
+        const conversationsWithLastMessage = data.map((conv: any) => ({
+          ...conv,
+          is_group: conv.type === 'group', // Calculate is_group from type
+          messages: conv.messages
+            .sort((a: any, b: any) => 
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            )
+            .slice(0, 1)
+        }));
+        setConversations(conversationsWithLastMessage);
+      }
+    } catch (error) {
+      console.error('Error loading conversations:', error);
+      // Show user-friendly error
+      alert('Failed to load conversations. Please refresh the page.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const subscribeToConversations = () => {

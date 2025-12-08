@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/presence/StatusBadge';
 import { MessageSquare, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { createOrGetDM } from '@/app/actions/conversations';
+import { createClient } from '@/lib/supabase/client';
 
 interface UserCardProps {
   user: {
@@ -25,11 +25,82 @@ export function UserCard({ user, onClose }: UserCardProps) {
   const handleMessage = async () => {
     setLoading(true);
     try {
-      const conversationId = await createOrGetDM(user.id);
+      const supabase = createClient();
+      
+      // Get current user
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) throw new Error('Not authenticated');
+
+      // Find existing DM conversation
+      const { data: myConversations } = await supabase
+        .from('conversation_members')
+        .select('conversation_id')
+        .eq('user_id', currentUser.id);
+
+      let conversationId: string | null = null;
+
+      if (myConversations && myConversations.length > 0) {
+        const conversationIds = myConversations.map(c => c.conversation_id);
+
+        // Find shared DM with other user
+        const { data: sharedConversations } = await supabase
+          .from('conversation_members')
+          .select(`
+            conversation_id,
+            conversations!inner(id, type)
+          `)
+          .eq('user_id', user.id)
+          .in('conversation_id', conversationIds)
+          .eq('conversations.type', 'dm');
+
+        if (sharedConversations && sharedConversations.length > 0) {
+          conversationId = sharedConversations[0].conversation_id;
+        }
+      }
+
+      // Create new conversation if not exists
+      if (!conversationId) {
+        console.log('[UserCard] Creating new conversation for user:', currentUser.id);
+        const { data: newConv, error: convError } = await supabase
+          .from('conversations')
+          .insert({
+            type: 'dm',
+            created_by: currentUser.id
+          })
+          .select()
+          .single();
+
+        if (convError) {
+          console.error('[UserCard] Conversation insert error:', convError);
+          throw convError;
+        }
+        console.log('[UserCard] Conversation created:', newConv.id);
+
+        // Add both users as members
+        const { error: membersError } = await supabase
+          .from('conversation_members')
+          .insert([
+            { conversation_id: newConv.id, user_id: currentUser.id },
+            { conversation_id: newConv.id, user_id: user.id }
+          ]);
+
+        if (membersError) {
+          console.error('[UserCard] Members insert error:', membersError);
+          throw membersError;
+        }
+        
+        console.log('[UserCard] Members added successfully');
+        conversationId = newConv.id;
+      }
+
+      console.log('[UserCard] Navigating to conversation:', conversationId);
       onClose?.();
       router.push(`/chat/${conversationId}`);
     } catch (error) {
       console.error('Failed to create/get DM:', error);
+      if (error && typeof error === 'object') {
+        console.error('Error details:', JSON.stringify(error, null, 2));
+      }
     } finally {
       setLoading(false);
     }

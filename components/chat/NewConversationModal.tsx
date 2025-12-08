@@ -76,33 +76,48 @@ export function NewConversationModal({ children }: { children: React.ReactNode }
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Check if conversation already exists
-      const { data: existingConv } = await supabase.rpc("get_user_conversations", {
-        p_user_id: user.id,
-      });
+      // Check if DM conversation already exists between these two users
+      // Get all conversations where current user is a member
+      const { data: myConversations, error: myConvError } = await supabase
+        .from("conversation_members")
+        .select("conversation_id")
+        .eq("user_id", user.id);
 
-      if (existingConv) {
-        const existing = existingConv.find((conv: any) => {
-          return (
-            !conv.is_group &&
-            conv.members.some((m: any) => m.id === otherUserId)
+      if (myConvError) throw myConvError;
+
+      if (myConversations && myConversations.length > 0) {
+        const conversationIds = myConversations.map((c) => c.conversation_id);
+
+        // Find conversations where the other user is also a member and it's a DM (not group)
+        const { data: existingDM, error: dmError } = await supabase
+          .from("conversation_members")
+          .select(`
+            conversation_id,
+            conversations!inner(id, is_group, type)
+          `)
+          .eq("user_id", otherUserId)
+          .in("conversation_id", conversationIds);
+
+        if (!dmError && existingDM && existingDM.length > 0) {
+          // Find the DM conversation (not group)
+          const dmConversation = existingDM.find((c: any) => 
+            c.conversations && !c.conversations.is_group && c.conversations.type === "dm"
           );
-        });
 
-        if (existing) {
-          // Navigate to existing conversation
-          router.push(`/chat/${existing.id}`);
-          setOpen(false);
-          return;
+          if (dmConversation) {
+            // Navigate to existing DM
+            router.push(`/chat/${dmConversation.conversation_id}`);
+            setOpen(false);
+            return;
+          }
         }
       }
 
-      // Create new conversation
+      // Create new DM conversation
       const { data: conversation, error: convError } = await supabase
         .from("conversations")
         .insert({
-          name: null,
-          is_group: false,
+          type: "dm",
           created_by: user.id,
         })
         .select()
@@ -110,7 +125,7 @@ export function NewConversationModal({ children }: { children: React.ReactNode }
 
       if (convError) throw convError;
 
-      // Add members
+      // Add both members
       const { error: membersError } = await supabase
         .from("conversation_members")
         .insert([
@@ -150,8 +165,8 @@ export function NewConversationModal({ children }: { children: React.ReactNode }
       const { data: conversation, error: convError } = await supabase
         .from("conversations")
         .insert({
-          name: groupName,
-          is_group: true,
+          type: "group",
+          title: groupName,
           created_by: user.id,
         })
         .select()
