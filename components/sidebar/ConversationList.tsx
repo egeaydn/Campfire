@@ -6,9 +6,17 @@ import { ConversationItem } from '@/components/sidebar/ConversationItem';
 import { SearchBar } from '@/components/search/SearchBar';
 import { CreateGroupDialog } from '@/components/groups/CreateGroupDialog';
 import { Button } from '@/components/ui/button';
-import { Loader2, LogOut } from 'lucide-react';
+import { Loader2, LogOut, User, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Conversation {
   id: string;
@@ -40,13 +48,35 @@ export function ConversationList({ currentUserId }: ConversationListProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{
+    username: string;
+    display_name: string;
+    avatar_url: string | null;
+  } | null>(null);
   const supabase = createClient();
   const router = useRouter();
 
   useEffect(() => {
     loadConversations();
     subscribeToConversations();
+    loadCurrentUser();
   }, []);
+
+  const loadCurrentUser = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username, display_name, avatar_url')
+        .eq('id', currentUserId)
+        .single();
+
+      if (!error && data) {
+        setCurrentUser(data);
+      }
+    } catch (error) {
+      console.error('Failed to load current user:', error);
+    }
+  };
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -173,31 +203,16 @@ export function ConversationList({ currentUserId }: ConversationListProps) {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="p-4 border-b">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <Image 
-              src="/campfire-logo.png" 
-              alt="Campfire" 
-              width={82} 
-              height={82}
-              className="drop-shadow-lg"
-              unoptimized
-            />
-            <h2 className="text-xl font-bold">Messages</h2>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleLogout}
-            disabled={loggingOut}
-            title="Logout"
-          >
-            {loggingOut ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <LogOut className="w-5 h-5" />
-            )}
-          </Button>
+        <div className="flex items-center gap-3 mb-4">
+          <Image 
+            src="/campfire-logo.svg" 
+            alt="Campfire" 
+            width={32} 
+            height={32}
+            className="drop-shadow-lg"
+            unoptimized
+          />
+          <h2 className="text-xl font-bold">Messages</h2>
         </div>
         <SearchBar />
         
@@ -230,6 +245,63 @@ export function ConversationList({ currentUserId }: ConversationListProps) {
           </div>
         )}
       </div>
+
+      {/* User Profile Section */}
+      {currentUser && (
+        <div className="border-t p-3 bg-muted/30">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 h-auto p-3 hover:bg-muted"
+              >
+                <Avatar className="w-10 h-10">
+                  <AvatarImage src={currentUser.avatar_url || ''} />
+                  <AvatarFallback className="bg-campfire-medium text-white">
+                    {currentUser.username.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col items-start text-left">
+                  <span className="font-semibold text-sm">
+                    {currentUser.display_name || currentUser.username}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    @{currentUser.username}
+                  </span>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => router.push('/profile')}>
+                <User className="w-4 h-4 mr-2" />
+                My Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/profile/settings')}>
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="text-red-600 focus:text-red-600"
+              >
+                {loggingOut ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Logging out...
+                  </>
+                ) : (
+                  <>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </>
+                )}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
     </div>
   );
 }
