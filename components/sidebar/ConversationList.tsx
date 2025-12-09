@@ -201,28 +201,24 @@ export function ConversationList({ currentUserId }: ConversationListProps) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
       <div className="p-4 border-b">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-4 align-center justify-center">
           <Image 
-            src="/campfire-logo.svg" 
+            src="/campfire-logo.png" 
             alt="Campfire" 
-            width={32} 
-            height={32}
+            width={92} 
+            height={82}
             className="drop-shadow-lg"
             unoptimized
           />
-          <h2 className="text-xl font-bold">Messages</h2>
         </div>
         <SearchBar />
         
-        {/* Create Group Button */}
         <div className="px-4 pt-2">
           <CreateGroupDialog />
         </div>
       </div>
 
-      {/* Conversation List */}
       <div className="flex-1 overflow-y-auto">
         {conversations.length === 0 ? (
           <div className="flex items-center justify-center h-full text-center p-8">
@@ -256,7 +252,7 @@ export function ConversationList({ currentUserId }: ConversationListProps) {
                 className="w-full justify-start gap-3 h-auto p-3 hover:bg-muted"
               >
                 <Avatar className="w-10 h-10">
-                  <AvatarImage src={currentUser.avatar_url || ''} />
+                  <AvatarImage src={currentUser.avatar_url || undefined} />
                   <AvatarFallback className="bg-campfire-medium text-white">
                     {currentUser.username.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
