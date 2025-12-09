@@ -160,14 +160,9 @@ export function Composer({ conversationId, userId, username }: ComposerProps) {
     setShowVoiceRecorder(false);
 
     try {
-      // Convert blob to file
-      const audioFile = new File([audioBlob], `voice-${Date.now()}.webm`, {
-        type: 'audio/webm;codecs=opus',
-      });
-
-      // Upload audio file
+      // Upload audio file directly as blob
       const formData = new FormData();
-      formData.append('file', audioFile);
+      formData.append('file', audioBlob, `voice-${Date.now()}.webm`);
 
       const result = await uploadFile(formData);
       if (!result.success) {

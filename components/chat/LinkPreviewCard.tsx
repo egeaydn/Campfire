@@ -108,7 +108,8 @@ export function LinkPreviewCard({ url, className }: LinkPreviewCardProps) {
               onError={(e) => {
                 e.currentTarget.style.display = "none";
               }}
-            )}
+            />
+          )}
           <span className="text-xs text-muted-foreground truncate">
             {preview.siteName || new URL(url).hostname}
           </span>

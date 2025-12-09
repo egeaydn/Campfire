@@ -149,7 +149,7 @@ export async function encryptWithSymmetricKey(
 
   return {
     encrypted: arrayBufferToBase64(encrypted),
-    iv: arrayBufferToBase64(iv),
+    iv: arrayBufferToBase64(iv.buffer),
   };
 }
 
