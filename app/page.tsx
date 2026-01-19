@@ -6,8 +6,7 @@ import { Loader2 } from "lucide-react";
 
 async function DashboardContent() {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims;
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     redirect('/auth/login');
@@ -17,7 +16,7 @@ async function DashboardContent() {
     <div className="flex h-screen">
       {/* Sidebar */}
       <aside className="w-80 border-r flex flex-col">
-        <ConversationList currentUserId={user.sub} />
+        <ConversationList currentUserId={user.id} />
       </aside>
 
       {/* Main Content */}

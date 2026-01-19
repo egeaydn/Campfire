@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { createMockClient } from "./mock-client";
 
 /**
  * Especially important if using Fluid compute: Don't put this client in a
@@ -7,6 +8,10 @@ import { cookies } from "next/headers";
  * it.
  */
 export async function createClient() {
+  if (process.env.NEXT_PUBLIC_USE_MOCK_CLIENT === "true") {
+    return createMockClient();
+  }
+
   const cookieStore = await cookies();
 
   return createServerClient(
